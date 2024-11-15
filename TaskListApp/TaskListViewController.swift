@@ -7,6 +7,10 @@
 
 import UIKit
 
+protocol NewTaskViewControllerDelegate: AnyObject {
+    func reloadData()
+}
+
 enum Colors {
     static let backgroundColor = UIColor(
         red: 45/255,
@@ -43,20 +47,57 @@ enum Colors {
 }
 
 final class TaskListViewController: UITableViewController {
-
+    
+    private var tasks: [ToDoTask] = []
+    private let cellID = "task"
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellID)
         view.backgroundColor = Colors.backgroundColor
 
         setupNavigationBar()
+        fetchData()
     }
     
     @objc private func addTask() {
         let newTaskVC = NewTaskViewController()
+        newTaskVC.delegate = self
         present(newTaskVC, animated: true)
     }
     
+    private func fetchData() {
+        // TODO: Change
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let fetchRequest = ToDoTask.fetchRequest()
+        
+        do {
+            tasks = try appDelegate.persistentContainer.viewContext.fetch(fetchRequest)
+        } catch {
+            print(error)
+        }
+    }
+    
 }
+
+// MARK: - UITableViewDataSource
+extension TaskListViewController {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        tasks.count
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
+        let ToDoTask = tasks[indexPath.row]
+        
+        var content = cell.defaultContentConfiguration()
+        content.text = ToDoTask.title
+        
+        cell.contentConfiguration = content
+        return cell
+    }
+}
+
 // MARK: - Setup UI
 private extension TaskListViewController {
     
@@ -94,5 +135,12 @@ private extension TaskListViewController {
         
     }
     
+}
+
+extension TaskListViewController: NewTaskViewControllerDelegate {
+    func reloadData() {
+        fetchData()
+        tableView.reloadData()
+    }
 }
 

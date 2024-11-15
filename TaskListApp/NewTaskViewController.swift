@@ -9,6 +9,8 @@ import UIKit
 
 final class NewTaskViewController: UIViewController {
     
+    weak var delegate: NewTaskViewControllerDelegate?
+    
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Add new task"
@@ -18,55 +20,29 @@ final class NewTaskViewController: UIViewController {
     }()
     
     private lazy var saveButton: UIButton = {
-        // set attribute for button title
-        var attributes = AttributeContainer()
-        attributes.font = UIFont.boldSystemFont(ofSize: 20)
-        
-        var buttonConfiguration = UIButton.Configuration.filled()
-        buttonConfiguration.attributedTitle = AttributedString(
-            "Save Task",
-            attributes: attributes
-        )
-        buttonConfiguration.baseBackgroundColor = Colors.backgroundColor
-        buttonConfiguration.baseForegroundColor = Colors.fillerColor
-        
-        
-        let button = UIButton(
-            configuration: buttonConfiguration,
-            primaryAction: UIAction { [unowned self] _ in
-                    save()
+        let filledButton = FilledButtonFactory(
+            title: "Save Task",
+            backgroundColor: Colors.backgroundColor,
+            foregroundColor: Colors.fillerColor,
+            action: UIAction { [unowned self] _ in
+                save()
             }
         )
         
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+        return filledButton.createButton()
     }()
-    
     private lazy var cancelButton: UIButton = {
-        // set attribute for button title
-        var attributes = AttributeContainer()
-        attributes.font = UIFont.boldSystemFont(ofSize: 20)
-        
-        var buttonConfiguration = UIButton.Configuration.filled()
-        buttonConfiguration.attributedTitle = AttributedString(
-            "Cancel",
-            attributes: attributes
-        )
-        buttonConfiguration.baseBackgroundColor = Colors.softRed
-        buttonConfiguration.baseForegroundColor = Colors.fillerColor
-        
-        
-        let button = UIButton(
-            configuration: buttonConfiguration,
-            primaryAction: UIAction { [unowned self] _ in
+        let filledButton = FilledButtonFactory(
+            title: "Cancel",
+            backgroundColor: Colors.softRed,
+            foregroundColor: Colors.fillerColor,
+            action: UIAction { [unowned self] _ in
                 dismiss(animated: true)
             }
         )
         
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+        return filledButton.createButton()
     }()
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,6 +53,12 @@ final class NewTaskViewController: UIViewController {
     }
     
     private func save() {
+        // TODO: change 
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let task = ToDoTask(context: appDelegate.persistentContainer.viewContext)
+        task.title = taskTextField.text
+        appDelegate.saveContext()
+        delegate?.reloadData()
         dismiss(animated: true)
     }
 }
@@ -96,7 +78,8 @@ private extension NewTaskViewController {
             taskTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
         ])
         
-        NSLayoutConstraint.activate([saveButton.topAnchor.constraint(equalTo: taskTextField.bottomAnchor,constant: 20),
+        NSLayoutConstraint.activate([
+            saveButton.topAnchor.constraint(equalTo: taskTextField.bottomAnchor,constant: 20),
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 210 ),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
         ])
